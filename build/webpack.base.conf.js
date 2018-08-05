@@ -4,6 +4,7 @@ var utils = require('./utils')
 var config = require('../config')
 var vueLoaderConfig = require('./vue-loader.conf')
 var MpvuePlugin = require('webpack-mpvue-asset-plugin')
+const ImportComponent = require('import-weapp-component')
 var glob = require('glob')
 
 function resolve (dir) {
@@ -103,6 +104,7 @@ module.exports = {
     ]
   },
   plugins: [
-    new MpvuePlugin()
+    new MpvuePlugin(),
+    new ImportComponent()
   ]
 }

@@ -1,108 +1,95 @@
 <template>
-  <div class="container" @click="clickHandle('test click', $event)">
-
-    <div class="userinfo" @click="bindViewTap">
-      <img class="userinfo-avatar" v-if="userInfo.avatarUrl" :src="userInfo.avatarUrl" background-size="cover" />
-      <div class="userinfo-nickname">
-        <card :text="userInfo.nickName"></card>
-      </div>
+  <div class="container">
+    <div class="userinfo">
+      <img class="userinfo-avatar" :src="userInfo.avatarUrl" alt="">
+      <p class="userinfo-nickname">{{userInfo.nickName}}</p>
     </div>
-
-    <div class="usermotto">
-      <div class="user-motto">
-        <card :text="motto"></card>
-      </div>
+    <div class="progress-wrapper">
+      <progress-bar :precent="34" status="wrong"></progress-bar>
     </div>
-    <button open-type="getUserInfo">获取用户信息</button>
-    <form class="form-container">
-      <input type="text" class="form-control" v-model="motto" placeholder="v-model" />
-      <input type="text" class="form-control" v-model.lazy="motto" placeholder="v-model.lazy" />
-    </form>
-    <a href="/pages/counter/main" class="counter">去往Vuex示例页面</a>
+    <i-button @click="handleAddBook" type="error">添加图书</i-button>
   </div>
 </template>
 
 <script>
-import card from '@/components/card'
+import qcloud from 'wafer2-client-sdk'
+import { QCLOUD_LOGIN_URL } from '../../config/config'
+import { showToast } from '../../utils/tips'
+import ProgressBar from '@/components/progress-bar'
+// import request from '../../utils/request'
 
 export default {
   data () {
     return {
-      motto: 'Hello World',
       userInfo: {}
     }
   },
 
   components: {
-    card
+    ProgressBar
   },
 
   methods: {
-    bindViewTap () {
-      const url = '../logs/main'
-      wx.navigateTo({ url })
-    },
     getUserInfo () {
-      // 调用登录接口
-      wx.login({
-        success: () => {
-          wx.getUserInfo({
-            success: (res) => {
-              this.userInfo = res.userInfo
-            }
-          })
+      qcloud.setLoginUrl(QCLOUD_LOGIN_URL)
+      qcloud.login({
+        success: function (userInfo) {
+          console.log('登录成功 ', userInfo)
+          this.userInfo = userInfo
+          wx.setStorageSync('userInfo', userInfo)
+          showToast('登录成功')
         },
-        fail: (err) => {
-          console.log(err)
+        fail: function (error) {
+          console.log('登录失败 ', error)
+          showToast('登录失败', 'none')
         }
       })
     },
-    clickHandle (msg, ev) {
-      console.log('clickHandle:', msg, ev)
+    handleAddBook () {
+      // 只允许从相机扫码
+      wx.scanCode({
+        onlyFromCamera: true,
+        success: (res) => {
+          console.log(res)
+        }
+      })
     }
   },
 
   created () {
-    // 调用应用实例的方法获取全局数据
-    this.getUserInfo()
+    try {
+      const userInfo = wx.getStorageSync('userInfo')
+      console.log(userInfo)
+      if (userInfo) {
+        this.userInfo = userInfo
+      } else {
+        this.getUserInfo()
+      }
+    } catch (e) {
+      // Do something when catch error
+      console.log(e)
+    }
   }
 }
 </script>
 
-<style scoped>
-.userinfo {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.userinfo-avatar {
-  width: 128rpx;
-  height: 128rpx;
-  margin: 20rpx;
-  border-radius: 50%;
-}
-
-.userinfo-nickname {
-  color: #aaa;
-}
-
-.usermotto {
-  margin-top: 150px;
-}
-
-.form-control {
-  display: block;
-  padding: 0 12px;
-  margin-bottom: 5px;
-  border: 1px solid #ccc;
-}
-
-.counter {
-  display: inline-block;
-  margin: 10px auto;
-  padding: 5px 10px;
-  color: blue;
-  border: 1px solid blue;
-}
+<style scoped lang="stylus">
+.userinfo
+  display: flex
+  flex-direction: column
+  align-items: center
+  .userinfo-avatar
+    width: 100px
+    height: 100px
+    margin: 10px
+    border-radius: 50%
+  .userinfo-nickname
+    color: #000;
+.add-book
+  width 100%
+  padding 0 20px
+  margin-top 20px
+  box-sizing border-box
+.progress-wrapper
+  padding: 10px
 </style>
